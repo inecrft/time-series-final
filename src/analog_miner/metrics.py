@@ -1,3 +1,8 @@
+"""
+Each metric takes two 1D arrays of equal length
+and returns a non-negative scalar distance. Smaller = more similar
+"""
+
 from __future__ import annotations
 
 from typing import Callable, Literal
@@ -10,7 +15,7 @@ def _znorm(x: np.ndarray) -> np.ndarray:
     mu = x.mean()
     sd = x.std()
     if sd < 1e-12:
-        return x - mu
+        return x - mu # avoid division by ~0
     return (x - mu) / sd
 
 
@@ -34,22 +39,21 @@ def dtw_constrained(q: np.ndarray, c: np.ndarray, band_frac: float = 0.1) -> flo
     """Dynamic Time Warping with a Sakoe-Chiba band constraint.
 
     The band restricts warping to |i - j| <= band, cutting cost from O(L^2)
-    to O(L * band). For financial returns the band should be tight (5-10% of
-    window length) because excessive warping has little economic meaning on
-    daily bars.
+    to O(L * band).
     """
     qz, cz = _znorm(q), _znorm(c)
     n, m = len(qz), len(cz)
     band = max(1, int(band_frac * max(n, m)))
 
+    # Construct full cost matrix with only entries inside global constriant band being filled.
     D = np.full((n + 1, m + 1), np.inf)
-    D[0, 0] = 0.0
+    D[0, 0] = 0.0 # Base case for recurrence
     for i in range(1, n + 1):
         j_lo = max(1, i - band)
         j_hi = min(m, i + band)
         for j in range(j_lo, j_hi + 1):
             cost = (qz[i - 1] - cz[j - 1]) ** 2
-            D[i, j] = cost + min(D[i - 1, j], D[i, j - 1], D[i - 1, j - 1])
+            D[i, j] = cost + min(D[i - 1, j], D[i, j - 1], D[i - 1, j - 1]) # main recursive function
     return float(np.sqrt(D[n, m]))
 
 

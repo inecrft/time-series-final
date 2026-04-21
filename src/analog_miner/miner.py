@@ -91,6 +91,8 @@ class AnalogMiner:
         accepted for convenience.
         """
         prices = self._validate_series(prices)
+
+        # Convert to "log returns"
         returns = np.log(prices / prices.shift(1)).dropna()
 
         q_end_idx = self._resolve_index(returns, query_end)
@@ -104,18 +106,21 @@ class AnalogMiner:
         q_vol = float(q_arr.std())
         q_cumret = float(q_arr.sum())
 
+        # Build candidate windows
         candidate_starts = self._candidate_start_indices(
             n_returns=len(returns),
             q_start_idx=q_start_idx,
             q_end_idx=q_end_idx,
         )
 
+        # Filter to only candidate window with standard deviation within certain range of the query window 
         if self.vol_band is not None:
             lo, hi = self.vol_band
             candidate_starts = [
                 s for s in candidate_starts if lo * q_vol <= returns.values[s : s + self.L].std() <= hi * q_vol
             ]
 
+        # Score the surviving candidates
         scored: list[tuple[float, int]] = []
         ret_vals = returns.values
         for s in candidate_starts:
@@ -125,6 +130,7 @@ class AnalogMiner:
 
         scored.sort(key=lambda t: t[0])
 
+        # Find Top-K with minimum separation
         selected = self._select_with_separation(scored)
         matches = [self._build_match(s, d, prices, returns) for d, s in selected]
 
@@ -159,6 +165,7 @@ class AnalogMiner:
             return int(query_end)
         ts = pd.Timestamp(query_end)
         if ts not in returns.index:
+            # Pick the most recent bar at or before the requested date
             pos = returns.index.searchsorted(ts, side="right") - 1
             if pos < 0:
                 raise ValueError(f"query_end {query_end} before data starts")
@@ -175,13 +182,14 @@ class AnalogMiner:
         starts = []
         for s in range(0, last_valid_start + 1):
             end = s + self.L - 1
+            # Make sure candidate window is not too close to the query. Separate by `gap` at the least.
             if end >= q_start_idx - gap and s <= q_end_idx + gap:
                 continue
             starts.append(s)
         return starts
 
     def _select_with_separation(self, scored: list[tuple[float, int]]) -> list[tuple[float, int]]:
-        """Greedy top-K selection enforcing min_separation between starts."""
+        """Greedy top-K selection enforcing `min_separation` between start point of selected windows."""
         selected: list[tuple[float, int]] = []
         for d, s in scored:
             if all(abs(s - s2) >= self.min_separation for _, s2 in selected):
@@ -215,6 +223,8 @@ class AnalogMiner:
 
         window_returns = returns.iloc[start_idx : end_idx + 1]
         forward_returns = returns.iloc[fwd_start : fwd_end + 1]
+
+        # Map returns-indexed slices back to price timestamps
         window_prices = prices.loc[window_returns.index]
         forward_prices = prices.loc[forward_returns.index]
 
