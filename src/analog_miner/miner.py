@@ -15,10 +15,12 @@ Design notes:
 
 from __future__ import annotations
 
+import heapq
+
 import numpy as np
 import pandas as pd
 
-from .metrics import METRIC_REGISTRY, MetricName
+from .metrics import METRIC_REGISTRY, MetricName, _dtw_envelope, _znorm, lb_keogh
 from .models import AnalogMatch, AnalogResult
 
 
@@ -123,10 +125,33 @@ class AnalogMiner:
         # Score the surviving candidates
         scored: list[tuple[float, int]] = []
         ret_vals = returns.values
+
+        # For DTW, precompute the query envelope once and use LB_Keogh to skip
+        # candidates whose lower bound already exceeds the current k-th best.
+        use_lb = self.metric_name == "dtw"
+        if use_lb:
+            band = max(1, int(0.1 * self.L))  # must match band_frac in dtw_constrained
+            U_env, L_env = _dtw_envelope(_znorm(q_arr), band)
+
+        # Max-heap (negated distances) tracking the k-th best distance seen so
+        # far — used as the LB_Keogh pruning threshold.
+        heap: list[tuple[float, int]] = []
+        kth_best = float("inf")
+
         for s in candidate_starts:
             c_arr = ret_vals[s : s + self.L]
+            if use_lb and lb_keogh(_znorm(c_arr), U_env, L_env) >= kth_best:
+                continue
             d = self.metric_fn(q_arr, c_arr)
             scored.append((d, s))
+            # Keep a max-heap of size top_k to maintain the pruning threshold.
+            if len(heap) < self.top_k:
+                heapq.heappush(heap, (-d, s))
+                if len(heap) == self.top_k:
+                    kth_best = -heap[0][0]
+            elif d < kth_best:
+                heapq.heapreplace(heap, (-d, s))
+                kth_best = -heap[0][0]
 
         scored.sort(key=lambda t: t[0])
 

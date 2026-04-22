@@ -35,6 +35,30 @@ def correlation_distance(q: np.ndarray, c: np.ndarray) -> float:
     return float(1.0 - rho)
 
 
+def _dtw_envelope(q_znormed: np.ndarray, band: int) -> tuple[np.ndarray, np.ndarray]:
+    """Precompute the Sakoe-Chiba upper/lower envelope of a z-normalized query.
+
+    Used by lb_keogh to avoid redundant recomputation across candidates.
+    `band` must match the band used in dtw_constrained.
+    """
+    n = len(q_znormed)
+    U = np.array([q_znormed[max(0, i - band) : i + band + 1].max() for i in range(n)])
+    L = np.array([q_znormed[max(0, i - band) : i + band + 1].min() for i in range(n)])
+    return U, L
+
+
+def lb_keogh(c_znormed: np.ndarray, U: np.ndarray, L: np.ndarray) -> float:
+    """LB_Keogh lower bound on DTW distance. O(L), no warping path needed.
+
+    Returns a value guaranteed to be <= dtw_constrained(q, c). If this lower
+    bound already exceeds the current k-th best distance, the full DTW can be
+    skipped entirely.
+    """
+    above = np.maximum(c_znormed - U, 0.0)
+    below = np.maximum(L - c_znormed, 0.0)
+    return float(np.sqrt(np.sum((above + below) ** 2)))
+
+
 def dtw_constrained(q: np.ndarray, c: np.ndarray, band_frac: float = 0.1) -> float:
     """Dynamic Time Warping with a Sakoe-Chiba band constraint.
 
