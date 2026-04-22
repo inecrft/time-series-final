@@ -1,5 +1,7 @@
 # Time Series Final
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/inecrft/time-series-final/blob/main/examples/walkthrough.ipynb)
+
 Find historical price windows that most closely resemble a query window, then return the price paths that followed them as a distribution (not a point forecast).
 
 ## How it works
