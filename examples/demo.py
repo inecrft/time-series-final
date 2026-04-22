@@ -4,9 +4,10 @@ patterns, then queries the miner and reports what it found. Runs without
 any external data or network access.
 """
 
-from analog_miner import AnalogMiner
 from fixtures import make_synthetic_prices
 from reporting import summarize
+
+from analog_miner import AnalogMiner
 
 
 def main() -> None:

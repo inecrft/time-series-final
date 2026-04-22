@@ -11,16 +11,16 @@ class AnalogMatch:
     """A single historical analog and its forward period."""
 
     start_idx: int
-    end_idx: int # inclusive
+    end_idx: int  # inclusive
     forward_start_idx: int
-    forward_end_idx: int # inclusive
+    forward_end_idx: int  # inclusive
     distance: float
     window_prices: pd.Series
     window_returns: pd.Series
     forward_prices: pd.Series
     forward_returns: pd.Series
-    realized_vol: float         # std of daily returns inside the window
-    cumulative_return: float    # total log return over the window
+    realized_vol: float  # std of daily returns inside the window
+    cumulative_return: float  # total log return over the window
 
 
 @dataclass

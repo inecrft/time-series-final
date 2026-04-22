@@ -115,7 +115,7 @@ class AnalogMiner:
             q_end_idx=q_end_idx,
         )
 
-        # Filter to only candidate window with standard deviation within certain range of the query window 
+        # Filter to only candidate window with standard deviation within certain range of the query window
         if self.vol_band is not None:
             lo, hi = self.vol_band
             candidate_starts = [

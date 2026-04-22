@@ -15,7 +15,7 @@ def _znorm(x: np.ndarray) -> np.ndarray:
     mu = x.mean()
     sd = x.std()
     if sd < 1e-12:
-        return x - mu # avoid division by ~0
+        return x - mu  # avoid division by ~0
     return (x - mu) / sd
 
 
@@ -71,13 +71,13 @@ def dtw_constrained(q: np.ndarray, c: np.ndarray, band_frac: float = 0.1) -> flo
 
     # Construct full cost matrix with only entries inside global constriant band being filled.
     D = np.full((n + 1, m + 1), np.inf)
-    D[0, 0] = 0.0 # Base case for recurrence
+    D[0, 0] = 0.0  # Base case for recurrence
     for i in range(1, n + 1):
         j_lo = max(1, i - band)
         j_hi = min(m, i + band)
         for j in range(j_lo, j_hi + 1):
             cost = (qz[i - 1] - cz[j - 1]) ** 2
-            D[i, j] = cost + min(D[i - 1, j], D[i, j - 1], D[i - 1, j - 1]) # main recursive function
+            D[i, j] = cost + min(D[i - 1, j], D[i, j - 1], D[i - 1, j - 1])  # main recursive function
     return float(np.sqrt(D[n, m]))
 
 

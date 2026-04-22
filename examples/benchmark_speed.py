@@ -25,15 +25,15 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from analog_miner import AnalogMiner
 
 # ---------------------------------------------------------------------------
-DATA_PATH        = Path(__file__).parent / "data" / "SP500.csv"
-DATE_COL         = "observation_date"
-PRICE_COL        = "SP500"
+DATA_PATH = Path(__file__).parent / "data" / "SP500.csv"
+DATE_COL = "observation_date"
+PRICE_COL = "SP500"
 
-WINDOW_SIZE      = 60
+WINDOW_SIZE = 60
 FORECAST_HORIZON = 20
-TOP_K            = 15
-N_QUERIES        = 50   # number of timed find() calls per config
-STRIDE           = 20   # spacing between query points
+TOP_K = 15
+N_QUERIES = 50  # number of timed find() calls per config
+STRIDE = 20  # spacing between query points
 # ---------------------------------------------------------------------------
 
 
@@ -46,11 +46,11 @@ class Config:
 
 CONFIGS: list[Config] = [
     Config("baseline  (euclidean, no vol filter)", "euclidean_znorm", None),
-    Config("euclid  + vol_band (0.7–1.5)",         "euclidean_znorm", (0.7, 1.5)),
-    Config("correlation, no vol filter",            "correlation",     None),
-    Config("correlation + vol_band (0.7–1.5)",      "correlation",     (0.7, 1.5)),
-    Config("dtw,        no vol filter",             "dtw",             None),
-    Config("dtw       + vol_band (0.7–1.5)",        "dtw",             (0.7, 1.5)),
+    Config("euclid  + vol_band (0.7–1.5)", "euclidean_znorm", (0.7, 1.5)),
+    Config("correlation, no vol filter", "correlation", None),
+    Config("correlation + vol_band (0.7–1.5)", "correlation", (0.7, 1.5)),
+    Config("dtw,        no vol filter", "dtw", None),
+    Config("dtw       + vol_band (0.7–1.5)", "dtw", (0.7, 1.5)),
 ]
 
 
